@@ -365,25 +365,28 @@ class PHPExcel_Reader_Excel2007 extends PHPExcel_Reader_Abstract implements PHPE
                         $xmlTheme = $xmlTheme->children("http://schemas.openxmlformats.org/drawingml/2006/main");
                         $themeName = (string)$xmlThemeName['name'];
 
-                        $colourScheme = $xmlTheme->themeElements->clrScheme->attributes();
-                        $colourSchemeName = (string)$colourScheme['name'];
-                        $colourScheme = $xmlTheme->themeElements->clrScheme->children("http://schemas.openxmlformats.org/drawingml/2006/main");
+                        if ($xmlTheme->themeElements->clrScheme){
+                            $colourScheme = $xmlTheme->themeElements->clrScheme->attributes();
+                            $colourSchemeName = (string)$colourScheme['name'];
+                            $colourScheme = $xmlTheme->themeElements->clrScheme->children("http://schemas.openxmlformats.org/drawingml/2006/main");
 
-                        $themeColours = array();
-                        foreach ($colourScheme as $k => $xmlColour) {
-                            $themePos = array_search($k, $themeOrderArray);
-                            if ($themePos === false) {
-                                $themePos = $themeOrderAdditional++;
+                            $themeColours = array();
+                            foreach ($colourScheme as $k => $xmlColour) {
+                                $themePos = array_search($k, $themeOrderArray);
+                                if ($themePos === false) {
+                                    $themePos = $themeOrderAdditional++;
+                                }
+                                if (isset($xmlColour->sysClr)) {
+                                    $xmlColourData = $xmlColour->sysClr->attributes();
+                                    $themeColours[$themePos] = $xmlColourData['lastClr'];
+                                } elseif (isset($xmlColour->srgbClr)) {
+                                    $xmlColourData = $xmlColour->srgbClr->attributes();
+                                    $themeColours[$themePos] = $xmlColourData['val'];
+                                }
                             }
-                            if (isset($xmlColour->sysClr)) {
-                                $xmlColourData = $xmlColour->sysClr->attributes();
-                                $themeColours[$themePos] = $xmlColourData['lastClr'];
-                            } elseif (isset($xmlColour->srgbClr)) {
-                                $xmlColourData = $xmlColour->srgbClr->attributes();
-                                $themeColours[$themePos] = $xmlColourData['val'];
-                            }
+                            self::$theme = new PHPExcel_Reader_Excel2007_Theme($themeName, $colourSchemeName, $themeColours);
                         }
-                        self::$theme = new PHPExcel_Reader_Excel2007_Theme($themeName, $colourSchemeName, $themeColours);
+
                     }
                     break;
             }
